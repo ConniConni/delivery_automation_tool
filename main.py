@@ -25,12 +25,10 @@ logging.basicConfig(
 )
 
 
-def main(config_file="config.ini"):
+def main():
     """
-    iniファイルとコマンド引数を解析し、内容を表示する関数
+    コマンド引数を解析し、内容を表示する関数
     """
-    config = configparser.ConfigParser()
-    config.read(config_file)
 
     parser = argparse.ArgumentParser(description="*説明*:xxxxxxxxxxx")
 
@@ -63,3 +61,10 @@ def main(config_file="config.ini"):
         logging.info(f"ツリー出力先: {args.tree_output_file_path}")
     else:
         logging.info("ツリー出力先: 標準出力")
+
+    config = configparser.ConfigParser()
+    config.read(args.config_file_path)
+
+
+if __name__ == "__main__":
+    main()
