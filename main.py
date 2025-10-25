@@ -31,7 +31,9 @@ def main():
     コマンド引数を解析し、内容を表示する関数
     """
 
-    parser = argparse.ArgumentParser(description="*説明*:xxxxxxxxxxx")
+    parser = argparse.ArgumentParser(
+        description="作業ディレクトリから納品対象ファイルを抽出し、ローカルにコピーまたはツリー形式で出力するツールです"
+    )
 
     parser.add_argument(
         "-i",
