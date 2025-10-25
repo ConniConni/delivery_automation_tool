@@ -56,3 +56,10 @@ def main(config_file="config.ini"):
     )
 
     args = parser.parse_args()
+
+    logging.info(f"iniファイル: {args.config_file_path}")
+    logging.info(f"抽出パターン: {args.file_pattern}")
+    if args.tree_output_file_path:
+        logging.info(f"ツリー出力先: {args.tree_output_file_path}")
+    else:
+        logging.info("ツリー出力先: 標準出力")
