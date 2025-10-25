@@ -17,6 +17,7 @@
 import logging
 import configparser
 import argparse
+from pathlib import Path
 
 
 # ロギング設定
@@ -38,6 +39,7 @@ def main():
         dest="config_file_path",
         help="設定ファイルへのパス",
         required=True,
+        type=Path,
     )
     parser.add_argument(
         "-f",
@@ -51,6 +53,7 @@ def main():
         "--tree_output",
         dest="tree_output_file_path",
         help="ツリー出力ファイルのパス。指定しない場合は標準出力に表示",
+        type=Path,
     )
 
     args = parser.parse_args()
