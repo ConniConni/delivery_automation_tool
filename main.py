@@ -15,8 +15,17 @@
 ##############################################################
 
 import logging
+import configparser
 
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+
+def main(config_file="config.ini"):
+    """
+    iniファイルとコマンド引数を解析し、内容を表示する関数
+    """
+    config = configparser.ConfigParser()
+    config.read(config_file)
