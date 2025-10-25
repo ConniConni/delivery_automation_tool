@@ -13,3 +13,10 @@
 # 実行方法はREADME.md 参照
 #
 ##############################################################
+
+import logging
+
+# ロギング設定
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
