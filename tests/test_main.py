@@ -68,3 +68,13 @@ class TestMainFunctions(unittest.TestCase):
         config = load_config(self.config_path)
         self.assertIsInstance(config, configparser.ConfigParser)
         self.assertEqual(config["Settings"]["key"], "value")
+
+    # 異常系（エラーが発生するべき状況）のコードパスが正しく実装されていることを保証
+    def test_load_config_file_not_found(self):
+        """
+        設定ファイルが見つからない場合にFileNotFoundErrorが発生することを確認
+        """
+        with self.assertRaisesRegex(
+            FileNotFoundError, r"設定ファイルが見つかりません: .*non_existent.ini"
+        ):
+            load_config(self.non_existent_path)
