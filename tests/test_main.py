@@ -23,6 +23,7 @@
 import unittest
 import tempfile  # 一時ディレクトリ作成に必要
 from pathlib import Path  # Pathオブジェクトの操作に必要
+import shutil  # 指定されたディレクトリを再帰的に完全に削除するのに必要
 
 
 class TestMainFunctions(unittest.TestCase):
@@ -48,3 +49,10 @@ class TestMainFunctions(unittest.TestCase):
         # 不正な設定ファイルの作成
         with open(self.invalid_config_path, "w") as f:
             f.write("これはINIファイルではありません")
+
+    def tearDown(self):
+        """
+        各テスト実行後に実行されるクリーンアップ処理
+        作成した一時ディレクトリ(self.test_dir)を削除する
+        """
+        shutil.rmtree(self.test_dir)
