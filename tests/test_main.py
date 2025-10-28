@@ -33,6 +33,8 @@ class TestMainFunctions(unittest.TestCase):
     def setUp(self):
         # 一時ディレクトリの作成
         self.test_dir = Path(tempfile.mkdtemp())
+
+        # パスを結合して、テストで使用するパスを設定
         self.config_path = self.test_dir / "test_config.ini"
         self.invalid_config_path = self.test_dir / "invalid_config.ini"
         self.non_existent_path = self.test_dir / "non_existent.ini"
