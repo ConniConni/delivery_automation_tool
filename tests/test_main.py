@@ -24,6 +24,10 @@ import unittest
 import tempfile  # 一時ディレクトリ作成に必要
 from pathlib import Path  # Pathオブジェクトの操作に必要
 import shutil  # 指定されたディレクトリを再帰的に完全に削除するのに必要
+import configparser
+
+# テスト用モジュールをインポート
+from main import load_config
 
 
 class TestMainFunctions(unittest.TestCase):
@@ -53,6 +57,14 @@ class TestMainFunctions(unittest.TestCase):
     def tearDown(self):
         """
         各テスト実行後に実行されるクリーンアップ処理
-        作成した一時ディレクトリ(self.test_dir)を削除する
+        作成した一時ディレクトリ(self.test_dir)を削除
         """
         shutil.rmtree(self.test_dir)
+
+    def test_load_config_success(self):
+        """
+        有効な設定ファイルが正常に読み込まれることを確認
+        """
+        config = load_config(self.config_path)
+        self.assertIsInstance(config, configparser.ConfigParser)
+        self.assertEqual(config["Settings"]["key"], "value")
