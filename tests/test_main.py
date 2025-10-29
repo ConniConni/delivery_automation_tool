@@ -72,6 +72,15 @@ class TestMainFunctions(unittest.TestCase):
         self.assertIsInstance(config, configparser.ConfigParser)
         self.assertEqual(config["Settings"]["key"], "value")
 
+    # 異常系（エラーが発生するべき状況）のコードパスが正しく実装されていることを保証
+    def test_load_config_file_not_found(self):
+        """
+        設定ファイルが見つからない場合にFileNotFoundErrorが発生することを確認
+        """
+        with self.assertRaisesRegex(
+            FileNotFoundError, r"設定ファイルが見つかりません: .*non_existent.ini"
+        ):
+            load_config(self.non_existent_path)
     # --- main 関数（argparseとロギング、configparserの連携）のテスト ---
 
     @patch("sys.stderr", new_callable=io.StringIO)  # 標準エラー出力を捕捉
