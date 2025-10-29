@@ -78,3 +78,12 @@ class TestMainFunctions(unittest.TestCase):
             FileNotFoundError, r"設定ファイルが見つかりません: .*non_existent.ini"
         ):
             load_config(self.non_existent_path)
+
+    def test_load_config_invalid_format(self):
+        """
+        INIファイルとして不正な形式の場合、エラーは出さず、
+        ファイルを読み込まれないこと(戻り値は[])を確認
+        """
+        config = load_config(self.invalid_config_path)
+        self.assertIsInstance(config, configparser.ConfigParser)
+        self.assertFalse(config.sections())  # セクションが読み込まれないことを確認
