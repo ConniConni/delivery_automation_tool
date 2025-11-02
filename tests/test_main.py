@@ -127,3 +127,20 @@ class TestMainFunctions(unittest.TestCase):
             self.assertIn(
                 "設定ファイルの読み込み完了。セクション: ['Settings']", stderr_output
             )
+
+    @patch("sys.stderr", new_callable=io.StringIO)
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("sys.exit")
+    def test_main_arg_parsing_success_without_tree_output(
+        self, mock_exit, mock_stdout, mock_stderr
+    ):
+        """
+        ツリー出力が省略された場合にmain関数が正常に動作することを確認する。
+        """
+        test_args = ["main.py", "-i", str(self.config_path), "-f", "*.csv"]
+        with patch("sys.argv", test_args):
+            main()
+
+            mock_exit.assert_not_called()
+            stderr_output = mock_stderr.getvalue()
+            self.assertIn("ツリー出力先: 標準出力", stderr_output)
