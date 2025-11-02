@@ -186,3 +186,7 @@ class TestMainFunctions(unittest.TestCase):
                 stderr_output,
             )
             mock_exit.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main()
