@@ -135,7 +135,7 @@ class TestMainFunctions(unittest.TestCase):
         self, mock_exit, mock_stdout, mock_stderr
     ):
         """
-        ツリー出力が省略された場合にmain関数が正常に動作することを確認する。
+        ツリー出力が省略された場合にmain関数が正常に動作することを確認
         """
         test_args = ["main.py", "-i", str(self.config_path), "-f", "*.csv"]
         with patch("sys.argv", test_args):
@@ -144,3 +144,23 @@ class TestMainFunctions(unittest.TestCase):
             mock_exit.assert_not_called()
             stderr_output = mock_stderr.getvalue()
             self.assertIn("ツリー出力先: 標準出力", stderr_output)
+
+    @patch("sys.stderr", new_callable=io.StringIO)
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("sys.exit")
+    def test_main_missing_required_args(self, mock_exit, mock_stdout, mock_stderr):
+        """
+        必須引数が不足している場合にSystemExitで終了することを確認
+        """
+        # -i が不足
+        test_args = ["main.py", "-f", "*.txt"]
+        with patch("sys.argv", test_args):
+            # argparseはsys.exitを呼び出すので、SystemExitを捕捉する
+            with self.assertRaises(SystemExit):
+                main()
+            mock_exit.assert_called_with(2)
+            # エラーメッセージが標準エラー出力に含まれているか確認
+            stderr_output = mock_stderr.getvalue()
+            self.assertIn(
+                "the following arguments are required: -i/--ini_file", stderr_output
+            )
