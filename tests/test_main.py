@@ -164,3 +164,25 @@ class TestMainFunctions(unittest.TestCase):
             self.assertIn(
                 "the following arguments are required: -i/--ini_file", stderr_output
             )
+
+    @patch("sys.stderr", new_callable=io.StringIO)
+    @patch("sys.stdout", new_callable=io.StringIO)
+    @patch("sys.exit")
+    def test_main_config_file_not_found(self, mock_exit, mock_stdout, mock_stderr):
+        """
+        指定された設定ファイルが存在しない場合にFileNotFoundErrorが発生し、ログに記録されることを確認
+        """
+        test_args = ["main.py", "-i", str(self.non_existent_path), "-f", "*.log"]
+        with patch("sys.argv", test_args):
+            with self.assertRaisesRegex(
+                FileNotFoundError, r"設定ファイルが見つかりません: .*non_existent.ini"
+            ):
+                main()
+
+            # エラーログメッセージが出力されていることを確認
+            stderr_output = mock_stderr.getvalue()
+            self.assertIn(
+                f"ERROR - 設定ファイルが見つかりません: {self.non_existent_path}",
+                stderr_output,
+            )
+            mock_exit.assert_not_called()
