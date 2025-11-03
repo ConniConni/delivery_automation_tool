@@ -193,25 +193,30 @@ class TestMainFunctions(unittest.TestCase):
                 stderr_output,
             )
 
-    @patch("sys.exit")
-    def test_main_config_file_not_found(self, mock_exit):
+    # sys.exit(status) が呼ばれたときに SystemExit(status) を発生させるカスタム side_effect 関数
+    def _mock_sys_exit(status):
+        raise SystemExit(status)
+
+    @patch("sys.exit", side_effect=_mock_sys_exit)  # カスタム関数を side_effect に指定
+    def test_main_missing_required_args(self, mock_exit):
         """
-        指定された設定ファイルが存在しない場合にFileNotFoundErrorが発生し、ログに記録されることを確認
+        必須引数が不足している場合にSystemExitで終了することを確認
         """
-        test_args = ["main.py", "-i", str(self.non_existent_path), "-f", "*.log"]
+        # -i が不足
+        test_args = ["main.py", "-f", "*.txt"]
         with patch("sys.argv", test_args):
-            with self.assertRaisesRegex(
-                FileNotFoundError, r"設定ファイルが見つかりません: .*non_existent.ini"
-            ):
+            with self.assertRaises(SystemExit) as cm:
                 main()
 
-            # エラーログメッセージが出力されていることを確認
+            # sys.exit が呼び出されたときに SystemExit(2) が発生したことを確認
+            self.assertEqual(cm.exception.code, 2)
+
+            # エラーメッセージが標準エラー出力に含まれているか確認
             stderr_output = self.mock_stderr.getvalue()
             self.assertIn(
-                f"ERROR - 設定ファイルの読み込み中に予期せぬエラーが発生しました: 設定ファイルが見つかりません: {self.non_existent_path}",
+                "error: the following arguments are required: -i/--ini_file",
                 stderr_output,
             )
-            mock_exit.assert_not_called()
 
 
 if __name__ == "__main__":
