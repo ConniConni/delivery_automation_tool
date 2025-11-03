@@ -154,7 +154,7 @@ class TestMainFunctions(unittest.TestCase):
 
             # 期待するロギングメッセージが含まれているか確認
             stderr_output = self.mock_stderr.getvalue()
-            self.assertIn(f"INIファイル: {self.config_path}", stderr_output)
+            self.assertIn(f"iniファイル: {self.config_path}", stderr_output)
             self.assertIn("抽出パターン: *.txt", stderr_output)
             self.assertIn(f"ツリー出力先: {self.output_file}", stderr_output)
             self.assertIn(
