@@ -174,7 +174,7 @@ class TestMainFunctions(unittest.TestCase):
             stderr_output = self.mock_stderr.getvalue()
             self.assertIn("ツリー出力先: 標準出力", stderr_output)
 
-    @patch("sys.exit")
+    @patch("sys.exit", side_effect=SystemExit)
     def test_main_missing_required_args(self, mock_exit):
         """
         必須引数が不足している場合にSystemExitで終了することを確認
@@ -182,14 +182,15 @@ class TestMainFunctions(unittest.TestCase):
         # -i が不足
         test_args = ["main.py", "-f", "*.txt"]
         with patch("sys.argv", test_args):
-            # argparseはsys.exitを呼び出すので、SystemExitを捕捉する
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(SystemExit) as cm:
                 main()
-            mock_exit.assert_called_with(2)
+
+            self.assertEqual(cm.exception.code, 2)
             # エラーメッセージが標準エラー出力に含まれているか確認
             stderr_output = self.mock_stderr.getvalue()
             self.assertIn(
-                "the following arguments are required: -i/--ini_file", stderr_output
+                "error: the following arguments are required: -i/--ini_file",
+                stderr_output,
             )
 
     @patch("sys.exit")
@@ -207,7 +208,7 @@ class TestMainFunctions(unittest.TestCase):
             # エラーログメッセージが出力されていることを確認
             stderr_output = self.mock_stderr.getvalue()
             self.assertIn(
-                f"ERROR - 設定ファイルが見つかりません: {self.non_existent_path}",
+                f"ERROR - 設定ファイルの読み込み中に予期せぬエラーが発生しました: 設定ファイルが見つかりません: {self.non_existent_path}",
                 stderr_output,
             )
             mock_exit.assert_not_called()

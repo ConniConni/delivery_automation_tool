@@ -106,6 +106,8 @@ def main():
     try:
         config = load_config(args.config_file_path)
         logging.info(f"設定ファイル: {args.config_file_path} を読み込みました。")
+    except FileNotFoundError:
+        raise
     except Exception:
         sys.exit(1)
 
