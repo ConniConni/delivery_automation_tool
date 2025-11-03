@@ -15,6 +15,7 @@
 ##############################################################
 
 import logging
+import sys
 import configparser
 import argparse
 from pathlib import Path
@@ -34,12 +35,25 @@ def load_config(config_file_path: Path):
     logging.info(f"設定ファイル {config_file_path} を読み込みます。")
     config = configparser.ConfigParser()
     try:
-        if not config_file_path.is_file():
+        if not config_file_path or not config_file_path.is_file():
             raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
+
+        with open(config_file_path, "r") as f:
+            content = f.read()
+            if not "[" in content or not "]" in content:
+                logging.warning(
+                    f"設定ファイル {config_file_path} はINIファイルの形式ではありません。"
+                )
+                return config  # 例外ではなく、空のconfigを返す
+
         config.read(config_file_path)
         logging.info(f"設定ファイルの読み込み完了。セクション: {config.sections()}")
-    except Exception as e:
+
+    except configparser.MissingSectionHeaderError as e:
         logging.error(f"設定ファイルの読み込み中にエラーが発生しました: {e}")
+        raise
+    except Exception as e:
+        logging.error(f"設定ファイルの読み込み中に予期せぬエラーが発生しました: {e}")
         raise
     return config
 
@@ -78,6 +92,10 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.config_file_path:
+        logging.error("設定ファイルへのパスが指定されていません。")
+        sys.exit(1)
+
     logging.info(f"iniファイル: {args.config_file_path}")
     logging.info(f"抽出パターン: {args.file_pattern}")
     if args.tree_output_file_path:
@@ -85,8 +103,13 @@ def main():
     else:
         logging.info("ツリー出力先: 標準出力")
 
-    config = load_config(args.config_file_path)
-    logging.info(f"設定ファイル: {args.config_file_path} を読み込みました。")
+    try:
+        config = load_config(args.config_file_path)
+        logging.info(f"設定ファイル: {args.config_file_path} を読み込みました。")
+    except FileNotFoundError:
+        raise
+    except Exception:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
