@@ -189,7 +189,7 @@ class TestMainFunctions(unittest.TestCase):
             # エラーメッセージが標準エラー出力に含まれているか確認
             stderr_output = self.mock_stderr.getvalue()
             self.assertIn(
-                "error: the following arguments are required: -i/--ini_file",
+                f"ERROR - 設定ファイルの読み込み中に予期せぬエラーが発生しました: 設定ファイルが見つかりません: {self.non_existent_path}",
                 stderr_output,
             )
 
