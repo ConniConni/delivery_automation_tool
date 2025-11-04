@@ -43,6 +43,43 @@ def load_config(config_file_path: Path) -> dict:
         config.read(config_file_path)
         logging.info(f"設定ファイルの読み込み完了。セクション: {config.sections()}")
 
+        if "General" not in config:
+            raise ValueError("[General]セクションが見つかりません。")
+
+        general_section = config["General"]
+
+        required_general_keys = {
+            "teams_root_path": Path,
+            "delivery_root_path": Path,
+            "project_name": str,
+            "item_name": str,
+            "delivery_year": int,
+            "delivery_quarter": str,
+        }
+
+        for key, expected_type in required_general_keys.items():
+            if key not in general_section:
+                raise ValueError(
+                    f"[General]セクションの必須項目'{key}'が見つかりません。"
+                )
+            value = general_section.get(key)
+
+            if value is None:
+                raise ValueError(f"[General]セクションの必須項目'{key}'の値が空です。")
+
+            try:
+                if expected_type == Path:
+                    config_data[key] = Path(value)
+                elif expected_type == int:
+                    config_data[key] = int(value)
+                else:
+                    config_data[key] = value
+
+            except ValueError:
+                raise ValueError(
+                    f"[General]セクションの'{key}'の値が不正な型です。期待される型: {expected_type.__name__}, 実際の値: '{value}'"
+                )
+
     except configparser.MissingSectionHeaderError as e:
         logging.error(f"設定ファイルの読み込み中にエラーが発生しました: {e}")
         raise
