@@ -80,6 +80,28 @@ def load_config(config_file_path: Path) -> dict:
                     f"[General]セクションの'{key}'の値が不正な型です。期待される型: {expected_type.__name__}, 実際の値: '{value}'"
                 )
 
+        config_data["mappings"] = {}
+        if "Mappings" not in config:
+            raise ValueError("[Mappings]セクションが見つかりません。")
+
+        mappings_section = config["Mappings"]
+
+        placeholder_value = config_data["item_name"]
+
+        for key, value in mappings_section.items():
+            logging.info("=== Mappingsセクション読み取りループ開始 ===")
+            if key not in mappings_section:
+                raise ValueError(
+                    f"[Mappings]セクションの必須項目'{key}'が見つかりません。"
+                )
+            value = mappings_section.get(key)
+
+            if value is None:
+                raise ValueError(f"[Mappings]セクションの必須項目'{key}'の値が空です。")
+
+            replaced_value = value.replace("[案件名]", placeholder_value)
+            config_data["mappings"][key] = Path(replaced_value)
+
     except configparser.MissingSectionHeaderError as e:
         logging.error(f"設定ファイルの読み込み中にエラーが発生しました: {e}")
         raise
