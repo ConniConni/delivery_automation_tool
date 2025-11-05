@@ -89,7 +89,6 @@ def load_config(config_file_path: Path) -> dict:
         placeholder_value = config_data["item_name"]
 
         for key, value in mappings_section.items():
-            logging.info("=== Mappingsセクション読み取りループ開始 ===")
             if key not in mappings_section:
                 raise ValueError(
                     f"[Mappings]セクションの必須項目'{key}'が見つかりません。"
