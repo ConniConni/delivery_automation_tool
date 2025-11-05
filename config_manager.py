@@ -32,7 +32,7 @@ def load_config(config_file_path: Path) -> dict:
         if not config_file_path or not config_file_path.is_file():
             raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
 
-        with open(config_file_path, "r") as f:
+        with open(config_file_path, "r", encoding="utf-8") as f:
             content = f.read()
             if not "[" in content or not "]" in content:
                 logging.warning(
@@ -40,7 +40,7 @@ def load_config(config_file_path: Path) -> dict:
                 )
                 return config_data  # 例外ではなく、空のconfig_dataを返す
 
-        config.read(config_file_path)
+        config.read(config_file_path, encoding="utf-8")
         logging.info(f"設定ファイルの読み込み完了。セクション: {config.sections()}")
 
         if "General" not in config:
