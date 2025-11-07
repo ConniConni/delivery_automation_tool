@@ -2,10 +2,7 @@ import logging
 import configparser
 from pathlib import Path
 
-# ロギング設定
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 def load_config(config_file_path: Path) -> dict:
