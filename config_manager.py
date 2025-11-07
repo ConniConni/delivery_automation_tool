@@ -28,6 +28,7 @@ def load_config(config_file_path: Path) -> dict:
     config = configparser.ConfigParser()
     config_data = {}
 
+    logging.info(f"設定ファイルパス：{config_file_path}")
     try:
         if not config_file_path or not config_file_path.is_file():
             raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
@@ -101,6 +102,9 @@ def load_config(config_file_path: Path) -> dict:
             replaced_value = value.replace("[案件名]", placeholder_value)
             config_data["mappings"][key] = Path(replaced_value)
 
+    except FileNotFoundError as e:
+        logging.error(e)
+        raise
     except configparser.MissingSectionHeaderError as e:
         logging.error(f"設定ファイルの読み込み中にエラーが発生しました: {e}")
         raise
