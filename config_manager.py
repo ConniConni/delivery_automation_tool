@@ -28,18 +28,9 @@ def load_config(config_file_path: Path) -> dict:
     config = configparser.ConfigParser()
     config_data = {}
 
-    logging.info(f"設定ファイルパス：{config_file_path}")
     try:
-        if not config_file_path or not config_file_path.is_file():
+        if not config_file_path.is_file():
             raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
-
-        with open(config_file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-            if not "[" in content or not "]" in content:
-                logging.warning(
-                    f"設定ファイル {config_file_path} はINIファイルの形式ではありません。"
-                )
-                return config_data  # 例外ではなく、空のconfig_dataを返す
 
         config.read(config_file_path, encoding="utf-8")
         logging.info(f"設定ファイルの読み込み完了。セクション: {config.sections()}")
@@ -103,6 +94,9 @@ def load_config(config_file_path: Path) -> dict:
             config_data["mappings"][key] = Path(replaced_value)
 
     except FileNotFoundError as e:
+        logging.error(e)
+        raise
+    except ValueError as e:
         logging.error(e)
         raise
     except configparser.MissingSectionHeaderError as e:
