@@ -25,81 +25,63 @@ def load_config(config_file_path: Path) -> dict:
     config = configparser.ConfigParser()
     config_data = {}
 
-    try:
-        if not config_file_path.is_file():
-            raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
+    if not config_file_path.is_file():
+        raise FileNotFoundError(f"設定ファイルが見つかりません: {config_file_path}")
 
-        config.read(config_file_path, encoding="utf-8")
-        logging.info(f"設定ファイルの読み込み完了。セクション: {config.sections()}")
+    config.read(config_file_path, encoding="utf-8")
 
-        if "General" not in config:
-            raise ValueError("[General]セクションが見つかりません。")
+    if "General" not in config:
+        raise ValueError("[General]セクションが見つかりません。")
 
-        general_section = config["General"]
+    general_section = config["General"]
 
-        required_general_keys = {
-            "teams_root_path": Path,
-            "delivery_root_path": Path,
-            "project_name": str,
-            "item_name": str,
-            "delivery_year": int,
-            "delivery_quarter": str,
-        }
+    required_general_keys = {
+        "teams_root_path": Path,
+        "delivery_root_path": Path,
+        "project_name": str,
+        "item_name": str,
+        "delivery_year": int,
+        "delivery_quarter": str,
+    }
 
-        for key, expected_type in required_general_keys.items():
-            if key not in general_section:
-                raise ValueError(
-                    f"[General]セクションの必須項目'{key}'が見つかりません。"
-                )
-            value = general_section.get(key)
+    for key, expected_type in required_general_keys.items():
+        if key not in general_section:
+            raise ValueError(f"[General]セクションの必須項目'{key}'が見つかりません。")
+        value = general_section.get(key)
 
-            if value is None:
-                raise ValueError(f"[General]セクションの必須項目'{key}'の値が空です。")
+        if value is None:
+            raise ValueError(f"[General]セクションの必須項目'{key}'の値が空です。")
 
-            try:
-                if expected_type == Path:
-                    config_data[key] = Path(value)
-                elif expected_type == int:
-                    config_data[key] = int(value)
-                else:
-                    config_data[key] = value
+        try:
+            if expected_type == Path:
+                config_data[key] = Path(value)
+            elif expected_type == int:
+                config_data[key] = int(value)
+            else:
+                config_data[key] = value
 
-            except ValueError:
-                raise ValueError(
-                    f"[General]セクションの'{key}'の値が不正な型です。期待される型: {expected_type.__name__}, 実際の値: '{value}'"
-                )
+        except ValueError:
+            raise ValueError(
+                f"[General]セクションの'{key}'の値が不正な型です。期待される型: {expected_type.__name__}, 実際の値: '{value}'"
+            )
 
-        config_data["mappings"] = {}
-        if "Mappings" not in config:
-            raise ValueError("[Mappings]セクションが見つかりません。")
+    config_data["mappings"] = {}
+    if "Mappings" not in config:
+        raise ValueError("[Mappings]セクションが見つかりません。")
 
-        mappings_section = config["Mappings"]
+    mappings_section = config["Mappings"]
 
-        placeholder_value = config_data["item_name"]
+    placeholder_value = config_data["item_name"]
 
-        for key, value in mappings_section.items():
-            if key not in mappings_section:
-                raise ValueError(
-                    f"[Mappings]セクションの必須項目'{key}'が見つかりません。"
-                )
-            value = mappings_section.get(key)
+    for key, value in mappings_section.items():
+        if key not in mappings_section:
+            raise ValueError(f"[Mappings]セクションの必須項目'{key}'が見つかりません。")
+        value = mappings_section.get(key)
 
-            if value is None:
-                raise ValueError(f"[Mappings]セクションの必須項目'{key}'の値が空です。")
+        if value is None:
+            raise ValueError(f"[Mappings]セクションの必須項目'{key}'の値が空です。")
 
-            replaced_value = value.replace("[案件名]", placeholder_value)
-            config_data["mappings"][key] = Path(replaced_value)
+        replaced_value = value.replace("[案件名]", placeholder_value)
+        config_data["mappings"][key] = Path(replaced_value)
 
-    except FileNotFoundError as e:
-        logging.error(e)
-        raise
-    except ValueError as e:
-        logging.error(e)
-        raise
-    except configparser.MissingSectionHeaderError as e:
-        logging.error(f"設定ファイルの読み込み中にエラーが発生しました: {e}")
-        raise
-    except Exception as e:
-        logging.error(f"設定ファイルの読み込み中に予期せぬエラーが発生しました: {e}")
-        raise
     return config_data
