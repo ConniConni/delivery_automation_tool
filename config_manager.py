@@ -49,7 +49,7 @@ def load_config(config_file_path: Path) -> dict:
             raise ValueError(f"[General]セクションの必須項目'{key}'が見つかりません。")
         value = general_section.get(key)
 
-        if value is None:
+        if value is None or value is not "":
             raise ValueError(f"[General]セクションの必須項目'{key}'の値が空です。")
 
         try:
