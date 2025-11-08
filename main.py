@@ -41,15 +41,17 @@ def main():
         "--ini_file",
         dest="config_file_path",
         help="設定ファイルへのパス",
-        required=True,
+        # required=True,
         type=Path,
+        default="/Users/koni/Desktop/delivery_automation_tool/",
     )
     parser.add_argument(
         "-f",
         "--file_pattern",
         dest="file_pattern",
         help="抽出対象のファイル名のパターン",
-        required=True,
+        # required=True,
+        default="*.py",
     )
     parser.add_argument(
         "-t",
@@ -77,7 +79,7 @@ def main():
         logging.info(f"設定ファイル: {args.config_file_path} を読み込みました。")
         return config
     except FileNotFoundError:
-        raise
+        sys.exit(1)
     except Exception:
         sys.exit(1)
 
