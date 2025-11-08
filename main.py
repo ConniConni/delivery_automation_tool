@@ -78,7 +78,7 @@ def main():
 
     try:
         config = config_manager.load_config(args.config_file_path)
-        return config
+
     except FileNotFoundError as e:
         logging.error(e)
         sys.exit(1)
