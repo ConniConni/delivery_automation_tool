@@ -17,6 +17,7 @@
 import logging
 import sys
 import argparse
+import configparser
 import config_manager
 from pathlib import Path
 
@@ -43,7 +44,7 @@ def main():
         help="設定ファイルへのパス",
         # required=True,
         type=Path,
-        default="/Users/koni/Desktop/delivery_automation_tool/",
+        default="/Users/koni/Desktop/delivery_automation_tool/config.ini",
     )
     parser.add_argument(
         "-f",
@@ -76,11 +77,18 @@ def main():
 
     try:
         config = config_manager.load_config(args.config_file_path)
-        logging.info(f"設定ファイル: {args.config_file_path} を読み込みました。")
         return config
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        logging.error(e)
         sys.exit(1)
-    except Exception:
+    except ValueError as e:
+        logging.error(e)
+        sys.exit(1)
+    except configparser.MissingSectionHeaderError as e:
+        logging.error(f"ファイルの読み込み中にエラーが発生しました。:{e}")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"ファイルの読み込み中に予期せぬエラーが発生しました。:{e}")
         sys.exit(1)
 
 
