@@ -18,9 +18,10 @@ import logging
 import sys
 import argparse
 import configparser
-import config_manager
 from pathlib import Path
 
+import config_manager
+import file_processor
 
 # ロギング設定
 logging.basicConfig(
@@ -91,7 +92,8 @@ def main():
         logging.error(f"ファイルの読み込み中に予期せぬエラーが発生しました。:{e}")
         sys.exit(1)
 
+    file_processor.process_files(config, args.file_pattern)
+
 
 if __name__ == "__main__":
-    config = main()
-    logging.info(config)
+    main()
