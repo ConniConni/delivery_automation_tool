@@ -40,7 +40,6 @@ def load_config(config_file_path: Path) -> dict:
         "delivery_root_path": Path,
         "project_name": str,
         "item_name": str,
-        "delivery_year": int,
         "delivery_quarter": str,
     }
 
@@ -55,8 +54,6 @@ def load_config(config_file_path: Path) -> dict:
         try:
             if expected_type == Path:
                 config_data[key] = Path(value)
-            elif expected_type == int:
-                config_data[key] = int(value)
             else:
                 config_data[key] = value
 
