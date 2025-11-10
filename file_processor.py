@@ -1,5 +1,7 @@
 import logging
+import os
 from pathlib import Path
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,8 @@ def process_files(config: dict, file_pattern: str):
         / config["delivery_quarter"]
         / config["project_name"]
     )
+
+    os.makedirs(destination_base_dir_path, exist_ok=True)
     logging.info(f"探索先ルートバス:{search_root_path}")
     logging.info(f"コピー先ベースディレクトリパス:{destination_base_dir_path}")
     logging.info(f"コピーキーワード:{file_pattern}")
