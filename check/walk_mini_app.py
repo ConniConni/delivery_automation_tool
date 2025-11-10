@@ -1,8 +1,8 @@
 import os
 import shutil
 
-src = "/Users/koni/Desktop/walk_base_sample"
-dst = "/Users/koni/Desktop/walk_copy_place"
+src = "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample"
+dst = "/Users/koni/Desktop/delivery_automation_tool/check/walk_copy_place"
 
 for root, dirs, files in os.walk(src):
     for file in files:
