@@ -51,7 +51,9 @@ for root, _, files in os.walk(src_base):
     # 現在のディレクトリの相対パスを取得（例: サンプル/010.調査/成果物/内部）
     # この相対パスを使って、どのルールが適用されるべきかを判断します
     relative_path = os.path.relpath(root, src_base)
+    print(f"relative_path: {relative_path}")
     path_parts = relative_path.split(os.sep)  # パスをスラッシュで分割
+    print(f"path_parts: {path_parts}")
 
     # 現在処理しているフォルダのキー (例: "010.調査") を特定
     # path_partsの最初の要素が "010.調査" のようなターゲットフォルダ名
