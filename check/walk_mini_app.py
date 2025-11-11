@@ -2,85 +2,106 @@ import os
 import shutil
 
 # ---【1. 設定（ハードコーディング部分）】---
+# ターゲットフォルダとその中のファイルに関するルールを定義
+# 各ターゲットフォルダについて、その直下にコピーするファイルと
+# その「成果物」サブフォルダにコピーするファイルのルールを明確にします。
 config = {
+    # 010.調査 フォルダに関する設定
     "010.調査": {
-        "file_patterns": ["{folder_name_dot}", "{folder_root_name}"],
+        "top_level_matcher": [
+            "調査_"
+        ],  # 010.調査 直下にコピーするファイルのプレフィックス
+        "artifact_matcher": [
+            "010_内部_",
+            "010_外部_",
+        ],  # 010.調査/成果物/ にコピーするファイルのプレフィックス
     },
+    # 020.設計 フォルダに関する設定
     "020.設計": {
-        "file_patterns": ["{folder_name_dot}", "{folder_root_name}"],
+        "top_level_matcher": ["設計_"],
+        "artifact_matcher": ["020_内部_", "020_外部_"],
     },
+    # 030.試験 フォルダに関する設定
     "030.試験": {
-        "file_patterns": ["{folder_name_dot}", "{folder_root_name}"],
+        "top_level_matcher": ["試験_"],
+        "artifact_matcher": ["030_内部_", "030_外部_"],
     },
-    "成果物": {
-        "file_patterns": ["{folder_number}_", "{folder_root_name}"],
-    },
+    # 必要に応じて、さらに他のフォルダの設定を追加...
 }
 
 # ---【2. パスの設定】---
-src = "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル"
-dst = "/Users/koni/Desktop/delivery_automation_tool/check/walk_copy_place/サンプル"
+src_base = (
+    "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル"
+)
+dst_base = "/Users/koni/Desktop/delivery_automation_tool/check/walk_copy_place/サンプル"
 
+print(f"--- ファイルコピーを開始します ---")
+print(f"コピー元ベース: {src_base}")
+print(f"コピー先ベース: {dst_base}\n")
 
-# ---【3. ファイル名が指定パターンすべてを含むか判定する関数】---
-def match_patterns(filename, patterns):
-    for pat in patterns:
-        if pat not in filename:
-            return False
-    return True
+# コピー先ベースディレクトリが存在しない場合は作成
+os.makedirs(dst_base, exist_ok=True)
 
+# ---【3. ファイルをコピーするメインロジック】---
+# os.walk によるファイル走査の for ループ
+for root, _, files in os.walk(src_base):
+    # 現在のディレクトリの相対パスを取得（例: サンプル/010.調査/成果物/内部）
+    # この相対パスを使って、どのルールが適用されるべきかを判断します
+    relative_path = os.path.relpath(root, src_base)
+    path_parts = relative_path.split(os.sep)  # パスをスラッシュで分割
 
-# ---【4. フォルダツリーを探索して、条件に合うファイルだけをコピー】---
-for root, dirs, files in os.walk(src):
-    folder_name = os.path.basename(root)  # 例: 010.調査
-    folder_name_dot = folder_name  # そのまま"010.調査"など
-    folder_root_name = (
-        folder_name.split(".")[1] if "." in folder_name else folder_name
-    )  # 例: "調査"
-    folder_number = folder_name.split(".")[0] if "." in folder_name else ""  # 例: "010"
+    # 現在処理しているフォルダのキー (例: "010.調査") を特定
+    # path_partsの最初の要素が "010.調査" のようなターゲットフォルダ名
+    target_folder_key = (
+        path_parts[0] if path_parts and path_parts[0] in config else None
+    )
 
-    if folder_name in config:
-        # ---【5. プレースホルダを置換して実際の判定パターンを構築】---
-        patterns = []
-        for pat in config[folder_name]["file_patterns"]:
-            pat = pat.replace("{folder_name_dot}", folder_name_dot)
-            pat = pat.replace("{folder_root_name}", folder_root_name)
-            pat = pat.replace("{folder_number}", folder_number)
-            patterns.append(pat)
+    if target_folder_key is None:
+        # 設定にないディレクトリの場合はスキップ
+        if relative_path != ".":  # ルートディレクトリ自体はスキップしない
+            continue
 
-        for file in files:
-            if match_patterns(file, patterns):
-                src_file = os.path.join(root, file)  # コピー元ファイル
-                rel_root = os.path.relpath(root, src)
-                dst_file = os.path.join(dst, rel_root, file)  # コピー先ファイル
-                os.makedirs(
-                    os.path.dirname(dst_file), exist_ok=True
-                )  # コピー先フォルダを作成
-                shutil.copy2(src_file, dst_file)  # ファイルコピー
+    # 各ディレクトリ内のファイルを走査する for ループ
+    for file_name in files:
+        src_file_path = os.path.join(root, file_name)
+        file_name_lower = file_name.lower()  # 判定のため小文字化
 
-# ブロックごとの解説
-# 1. 設定ハードコーディング
-# どのフォルダにどんな命名規則があるかをPythonの辞書で管理します。
+        copied = False  # このファイルがコピーされたかどうかのフラグ
 
-# フォルダごとにfile_patternsリストがあり、プレースホルダーで条件を共通化。
+        # --- コピー先の決定とコピー処理 ---
 
-# 2. パスの設定
-# コピー元(src)・コピー先(dst)のパスを設定。
+        # ターゲットフォルダの直下 (例: サンプル/010.調査/) にコピーする場合
+        # 現在のパスがターゲットフォルダ自体 (例: "サンプル/010.調査") であることを確認
+        if relative_path == target_folder_key and target_folder_key:
+            matchers = config[target_folder_key].get("top_level_matcher", [])
+            for matcher in matchers:
+                if file_name_lower.startswith(matcher.lower()):
+                    dst_dir = os.path.join(dst_base, target_folder_key)
+                    os.makedirs(dst_dir, exist_ok=True)
+                    dst_file_path = os.path.join(dst_dir, file_name)
+                    if not os.path.exists(dst_file_path):
+                        shutil.copy2(src_file_path, dst_file_path)
+                        print(f"コピー (トップ): {file_name} -> {dst_dir}")
+                    copied = True
+                    break  # 一致するマッチャーが見つかったら終了
 
-# 3. パターン判定関数
-# ファイル名がすべての規則パターンを満たしているかを判定するシンプルな関数です。
+        # ターゲットフォルダの「成果物」サブフォルダ (例: サンプル/010.調査/成果物/) にコピーする場合
+        # 現在のパスが「成果物」サブフォルダ、またはその下の「内部」「外部」である場合
+        if "成果物" in path_parts and target_folder_key:
+            matchers = config[target_folder_key].get("artifact_matcher", [])
+            for matcher in matchers:
+                if file_name_lower.startswith(matcher.lower()):
+                    dst_dir = os.path.join(dst_base, target_folder_key, "成果物")
+                    os.makedirs(dst_dir, exist_ok=True)
+                    dst_file_path = os.path.join(dst_dir, file_name)
+                    if not os.path.exists(dst_file_path):
+                        shutil.copy2(src_file_path, dst_file_path)
+                        print(f"コピー (成果物): {file_name} -> {dst_dir}")
+                    copied = True
+                    break  # 一致するマッチャーが見つかったら終了
 
-# 4. ディレクトリ探索＋本体ループ
-# os.walkで全フォルダ・ファイルを１回だけサーチします。
+        if not copied:
+            # print(f"スキップ (コピールール不一致): {file_name} (in {root})")
+            pass  # スキップログは通常は大量になるのでコメントアウト
 
-# 対象のフォルダ（configに載っているもの）の場合だけ、5. のパターン置換に進みます。
-
-# 5. パターン置換とコピー実行
-# 辞書型configの各パターンを、今いるフォルダ名等に合わせて {} を置換します。
-
-# 置換したパターンでファイル名を判定。
-
-# マッチしたファイルだけ、コピー先にディレクトリを作ってファイルをコピーします。
-
-# この方式なら、条件追加やフォルダの増減もconfigを書き足すだけで対応できます。
-# さらに複雑なパターンもここを拡張するだけでOKです。​
+print("\n--- ファイルコピーが完了しました ---")
