@@ -9,22 +9,22 @@ config = {
     # 010.調査 フォルダに関する設定
     "010.調査": {
         "top_level_matcher": [
-            "調査_"
+            "調査検討書_"
         ],  # 010.調査 直下にコピーするファイルのプレフィックス
         "artifact_matcher": [
-            "010_内部_",
-            "010_外部_",
+            "010_レビューチェクリスト_",
+            "レビュー記録表_調査_",
         ],  # 010.調査/成果物/ にコピーするファイルのプレフィックス
     },
     # 020.設計 フォルダに関する設定
     "020.設計": {
-        "top_level_matcher": ["設計_"],
-        "artifact_matcher": ["020_内部_", "020_外部_"],
+        "top_level_matcher": ["機能設計書_"],
+        "artifact_matcher": ["020_レビューチェクリスト_", "レビュー記録表_設計_"],
     },
     # 030.試験 フォルダに関する設定
-    "030.試験": {
-        "top_level_matcher": ["試験_"],
-        "artifact_matcher": ["030_内部_", "030_外部_"],
+    "030.UD作成": {
+        "top_level_matcher": ["単体試験仕様書_"],
+        "artifact_matcher": ["030_レビューチェクリスト_", "レビュー記録表_UD作成_"],
     },
     # メモ
     # 各工程フォルダの"top_level_matcher"は 調査*_ 機能設計書_ 単体試験仕様書_などで良さそう
@@ -83,7 +83,6 @@ for root, _, files in os.walk(src_base):
         # 現在のパスがターゲットフォルダ自体 (例: "サンプル/010.調査") であることを確認
         if relative_path == target_folder_key and target_folder_key:
             matchers = config[target_folder_key].get("top_level_matcher", [])
-            # configの持ち方を変えればこのfor文はなくせそう
             for matcher in matchers:
                 if file_name_lower.startswith(matcher.lower()):
                     dst_dir = os.path.join(dst_base, target_folder_key)
