@@ -57,9 +57,13 @@ for root, _, files in os.walk(src_base):
 
     # 現在処理しているフォルダのキー (例: "010.調査") を特定
     # path_partsの最初の要素が "010.調査" のようなターゲットフォルダ名
+    print(f"path_parts[0]:{path_parts[0]}")
+    print(f"path_parts:{path_parts}")
+
     target_folder_key = (
         path_parts[0] if path_parts and path_parts[0] in config else None
     )
+    print(f"target_folder_key:{target_folder_key}")
 
     if target_folder_key is None:
         # 設定にないディレクトリの場合はスキップ
@@ -79,6 +83,7 @@ for root, _, files in os.walk(src_base):
         # 現在のパスがターゲットフォルダ自体 (例: "サンプル/010.調査") であることを確認
         if relative_path == target_folder_key and target_folder_key:
             matchers = config[target_folder_key].get("top_level_matcher", [])
+            # configの持ち方を変えればこのfor文はなくせそう
             for matcher in matchers:
                 if file_name_lower.startswith(matcher.lower()):
                     dst_dir = os.path.join(dst_base, target_folder_key)
