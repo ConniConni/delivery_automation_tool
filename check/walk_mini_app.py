@@ -1,38 +1,28 @@
 import os
 import shutil
 
-# ---【1. 設定（ハードコーディング部分）】---
-# ターゲットフォルダとその中のファイルに関するルールを定義
-# 各ターゲットフォルダについて、その直下にコピーするファイルと
-# その「成果物」サブフォルダにコピーするファイルのルールを明確にします。
+# 設定情報
 config = {
-    # 010.調査 フォルダに関する設定
     "010.調査": {
-        "top_level_matcher": [
-            "調査検討書_"
-        ],  # 010.調査 直下にコピーするファイルのプレフィックス
+        "top_level_matcher": ["調査検討書_"],
         "artifact_matcher": [
             "010_レビューチェックリスト_",
             "レビュー記録表_調査_",
-        ],  # 010.調査/成果物/ にコピーするファイルのプレフィックス
+            "調査_サンプル_bk.xlsx",  # 例として追加。実際のファイル名を正確に記述してください
+        ],
     },
-    # 020.設計 フォルダに関する設定
     "020.設計": {
         "top_level_matcher": ["機能設計書_"],
         "artifact_matcher": ["020_レビューチェックリスト_", "レビュー記録表_設計_"],
     },
-    # 030.試験 フォルダに関する設定
     "030.UD作成": {
         "top_level_matcher": ["単体試験仕様書_"],
         "artifact_matcher": ["030_レビューチェックリスト_", "レビュー記録表_UD作成_"],
     },
-    # メモ
-    # 各工程フォルダの"top_level_matcher"は 調査*_ 機能設計書_ 単体試験仕様書_などで良さそう
-    # ただし、上記のファイルはコピー元には成果物階層にも同じものがあるためそれらをコピーしないような制御が必要
-    # 成果物フォルダも、現在のように複数指定することで解決が可能か
 }
 
-# ---【2. パスの設定】---
+# コピー元とコピー先のベースパス
+# 環境に合わせてパスを適宜変更してください
 src_base = (
     "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル"
 )
@@ -42,75 +32,81 @@ print(f"--- ファイルコピーを開始します ---")
 print(f"コピー元ベース: {src_base}")
 print(f"コピー先ベース: {dst_base}\n")
 
-# コピー先ベースディレクトリが存在しない場合は作成
+# コピー先ベースディレクトリをまず作成
 os.makedirs(dst_base, exist_ok=True)
 
-# ---【3. ファイルをコピーするメインロジック】---
-# os.walk によるファイル走査の for ループ
+# os.walkでコピー元ディレクトリツリーを走査
 for root, _, files in os.walk(src_base):
-    # 現在のディレクトリの相対パスを取得（例: サンプル/010.調査/成果物/内部）
-    # この相対パスを使って、どのルールが適用されるべきかを判断します
+    # src_baseからの相対パスを取得
     relative_path = os.path.relpath(root, src_base)
-    print(f"relative_path: {relative_path}")
-    path_parts = relative_path.split(os.sep)  # パスをスラッシュで分割
-    print(f"path_parts: {path_parts}")
+    path_parts = relative_path.split(os.sep)
 
-    # 現在処理しているフォルダのキー (例: "010.調査") を特定
-    # path_partsの最初の要素が "010.調査" のようなターゲットフォルダ名
-    print(f"path_parts[0]:{path_parts[0]}")
-    print(f"path_parts:{path_parts}")
+    # 「対象ディレクトリ」のキーを特定 (例: "010.調査")
+    target_folder_key = None
+    if path_parts and path_parts[0] in config:
+        target_folder_key = path_parts[0]
 
-    target_folder_key = (
-        path_parts[0] if path_parts and path_parts[0] in config else None
-    )
-    print(f"target_folder_key:{target_folder_key}")
+    # 対象ディレクトリではない場合、このパス以下のファイルは処理しない
+    if (
+        target_folder_key is None and relative_path != "."
+    ):  # '.'はsrc_base自体なので、その中のファイルは処理対象
+        continue
 
-    if target_folder_key is None:
-        # 設定にないディレクトリの場合はスキップ
-        if relative_path != ".":  # ルートディレクトリ自体はスキップしない
-            continue
-
-    # 各ディレクトリ内のファイルを走査する for ループ
+    # ファイルの処理
     for file_name in files:
         src_file_path = os.path.join(root, file_name)
-        file_name_lower = file_name.lower()  # 判定のため小文字化
+        file_name_lower = file_name.lower()  # マッチングのために小文字化
 
-        copied = False  # このファイルがコピーされたかどうかのフラグ
+        # コピー済みフラグ
+        copied = False
 
-        # --- コピー先の決定とコピー処理 ---
-
-        # ターゲットフォルダの直下 (例: サンプル/010.調査/) にコピーする場合
-        # 現在のパスがターゲットフォルダ自体 (例: "サンプル/010.調査") であることを確認
+        # 2.1. 対象ディレクトリ直下のドキュメントファイル (トップレベルドキュメント) のコピー
+        # rootがsrc_base/010.調査 のようなパスで、その中にファイルがある場合
         if relative_path == target_folder_key and target_folder_key:
             matchers = config[target_folder_key].get("top_level_matcher", [])
             for matcher in matchers:
                 if file_name_lower.startswith(matcher.lower()):
+                    # コピー先のディレクトリパスを作成 (例: dst_base/010.調査)
                     dst_dir = os.path.join(dst_base, target_folder_key)
-                    os.makedirs(dst_dir, exist_ok=True)
-                    dst_file_path = os.path.join(dst_dir, file_name)
-                    if not os.path.exists(dst_file_path):
-                        shutil.copy2(src_file_path, dst_file_path)
-                        print(f"コピー (トップ): {file_name} -> {dst_dir}")
-                    copied = True
-                    break  # 一致するマッチャーが見つかったら終了
+                    os.makedirs(dst_dir, exist_ok=True)  # ディレクトリがなければ作成
 
-        # ターゲットフォルダの「成果物」サブフォルダ (例: サンプル/010.調査/成果物/) にコピーする場合
-        # 現在のパスが「成果物」サブフォルダ、またはその下の「内部」「外部」である場合
+                    dst_file_path = os.path.join(dst_dir, file_name)
+                    if not os.path.exists(
+                        dst_file_path
+                    ):  # ファイルが既に存在しなければコピー
+                        shutil.copy2(src_file_path, dst_file_path)
+                        print(f"コピー (トップレベル): {file_name} -> {dst_dir}")
+                    copied = True
+                    break
+            if copied:  # コピーされたら次のファイルへ
+                continue
+
+        # 2.2. 「成果物」ディレクトリ内の特定ファイルのコピー (フラット化)
+        # パスに「成果物」が含まれ、かつ対象のフォルダキーが特定されている場合
+        # path_partsのどこかに"成果物"が含まれていればOK（例: "010.調査/成果物/内部"）
         if "成果物" in path_parts and target_folder_key:
             matchers = config[target_folder_key].get("artifact_matcher", [])
             for matcher in matchers:
                 if file_name_lower.startswith(matcher.lower()):
+                    # コピー先のディレクトリパスを作成 (例: dst_base/010.調査/成果物)
                     dst_dir = os.path.join(dst_base, target_folder_key, "成果物")
-                    os.makedirs(dst_dir, exist_ok=True)
-                    dst_file_path = os.path.join(dst_dir, file_name)
-                    if not os.path.exists(dst_file_path):
-                        shutil.copy2(src_file_path, dst_file_path)
-                        print(f"コピー (成果物): {file_name} -> {dst_dir}")
-                    copied = True
-                    break  # 一致するマッチャーが見つかったら終了
+                    os.makedirs(dst_dir, exist_ok=True)  # ディレクトリがなければ作成
 
+                    dst_file_path = os.path.join(dst_dir, file_name)
+                    if not os.path.exists(
+                        dst_file_path
+                    ):  # ファイルが既に存在しなければコピー
+                        shutil.copy2(src_file_path, dst_file_path)
+                        print(f"コピー: {file_name} -> {dst_dir}")
+                    copied = True
+                    break
+            if copied:  # コピーされたら次のファイルへ
+                continue
+
+        # どのルールにも合致しなかったファイルはコピーしない (要件2.1と2.2の注意点、要件3)
         if not copied:
-            # print(f"スキップ (コピールール不一致): {file_name} (in {root})")
-            pass  # スキップログは通常は大量になるのでコメントアウト
+            # デバッグのために、コピーされなかったファイルをログに出すことも可能
+            # print(f"スキップ: {file_name} in {relative_path} (ルールに合致しないため)")
+            pass
 
 print("\n--- ファイルコピーが完了しました ---")
