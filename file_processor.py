@@ -1,114 +1,159 @@
 import logging
 import os
 import shutil
-from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
 
 
-def process_files(config: dict, file_pattern: str):
+def process_files(path_config: dict):
     """
     基準パスを構築し、指定されたファイルパターンに合致するファイルをTeamsパスから探し、コピーする。
 
     Args:
         config (dict): 設定ファイルの読み込み結果
-        file_pattern (str): コマンドライン引数で指定したファイルパターンの文字列
 
     Returns:
-        delivery_base_path (Path): 基準パス
+        なし
     """
 
-    target_dirs = {
-        "030.調査": ["030", "調査", "調査"],
-        "040.設計": ["040", "設計", "機能設計書"],
-        "050.製造": [
-            "050",
-            "製造",
-        ],  # 製造は具体的なファイル名が少ないので、キーワードを調整
-        "060.UD作成": ["060", "UD作成", "単体試験仕様書"],
-        "070.UD消化": ["070", "UD消化", "単体試験成績書"],
-        "080.SD作成": ["080", "SD作成", "結合試験仕様書"],
-        "090.SD消化": ["090", "SD消化", "結合試験成績書", "試験結果報告書"],
+    # 設定情報
+    config = {
+        "030.調査": {
+            "top_level_matcher": ["調査検討書_"],
+            "artifact_matcher": [
+                "030_レビューチェックリスト_",
+                "レビュー記録表_調査",
+            ],
+        },
+        "040.設計": {
+            "top_level_matcher": ["機能設計書_"],
+            "artifact_matcher": ["040_レビューチェックリスト_", "レビュー記録表_設計"],
+        },
+        "050.製造": {
+            "top_level_matcher": [],
+            "artifact_matcher": ["050_レビューチェックリスト_", "レビュー記録表_CD"],
+        },
+        "060.UD作成": {
+            "top_level_matcher": ["単体試験仕様書_"],
+            "artifact_matcher": [
+                "060_レビューチェックリスト_",
+                "レビュー記録表_UD作成",
+            ],
+        },
+        "070.UD消化": {
+            "top_level_matcher": ["単体試験成績書_"],
+            "artifact_matcher": [
+                "070_レビューチェックリスト_",
+                "レビュー記録表_UD消化",
+            ],
+        },
+        "080.SD作成": {
+            "top_level_matcher": ["結合試験仕様書_"],
+            "artifact_matcher": [
+                "080_レビューチェックリスト_",
+                "レビュー記録表_SD作成",
+            ],
+        },
+        "090.SD消化": {
+            "top_level_matcher": ["結合試験成績書_", "試験結果報告書_"],
+            "artifact_matcher": [
+                "090_レビューチェックリスト_",
+                "レビュー記録表_SD消化",
+            ],
+        },
     }
 
-    search_root_path = config["teams_root_path"]
-    destination_base_dir_path = (
-        config["delivery_root_path"]
-        / config["delivery_quarter"]
-        / config["project_name"]
-    )
+    # コピー元とコピー先のベースパス
+    # 環境に合わせてパスを適宜変更してください
+    src_base = path_config["teams_root_path"]
+    dst_base = path_config["delivery_root_path"]
 
-    os.makedirs(destination_base_dir_path, exist_ok=True)
+    logging.info(f"--- ファイルコピーを開始します ---")
+    logging.info(f"探索先ルートバス:{src_base}")
 
-    for root, _, files in os.walk(search_root_path):
+    # コピー先ベースディレクトリをまず作成
+    os.makedirs(dst_base, exist_ok=True)
+
+    # os.walkでコピー元ディレクトリツリーを走査
+    for root, _, files in os.walk(src_base):
+        # src_baseからの相対パスを取得
+        relative_path = os.path.relpath(root, src_base)
+        path_parts = relative_path.split(os.sep)
+
+        # 「対象ディレクトリ」のキーを特定 (例: "010.調査")
+        target_folder_key = None
+        if path_parts and path_parts[0] in config:
+            target_folder_key = path_parts[0]
+
+        # 対象ディレクトリではない場合、このパス以下のファイルは処理しない
+        if (
+            target_folder_key is None and relative_path != "."
+        ):  # '.'はsrc_base自体なので、その中のファイルは処理対象
+            continue
+
+        # ファイルの処理
         for file_name in files:
-            source_file_path = os.path.join(root, file_name)
+            src_file_path = os.path.join(root, file_name)
+            file_name_lower = file_name.lower()  # マッチングのために小文字化
+
+            # コピー済みフラグ
             copied = False
 
-            # 各ターゲットディレクトリに対してチェック
-            for target_dir_name, keywords in target_dirs.items():
-                for keyword in keywords:
-                    if keyword.lower() in file_name.lower():  # 大文字小文字を区別しない
-                        # 条件1: 各フォルダ(030.調査 ...)に該当のファイルをコピー
-                        destination_top_dir = os.path.join(
-                            destination_base_dir_path, target_dir_name
-                        )
-                        os.makedirs(destination_top_dir, exist_ok=True)
+            # 2.1. 対象ディレクトリ直下のドキュメントファイル (トップレベルドキュメント) のコピー
+            # rootがsrc_base/010.調査 のようなパスで、その中にファイルがある場合
+            if relative_path == target_folder_key and target_folder_key:
+                matchers = config[target_folder_key].get("top_level_matcher", [])
+                for matcher in matchers:
+                    if file_name_lower.startswith(matcher.lower()):
+                        # コピー先のディレクトリパスを作成 (例: dst_base/010.調査)
+                        dst_dir = os.path.join(dst_base, target_folder_key)
+                        os.makedirs(
+                            dst_dir, exist_ok=True
+                        )  # ディレクトリがなければ作成
 
-                        # 条件3: 各フォルダトップには各フォルダと名称に一致するファイルをコピーする
-                        # 例: 030.調査には調査検討書...xlsx
-                        # ここでは、ファイル名にフォルダ名（030.調査）が直接含まれるか、
-                        # 最初のキーワード（030または調査）が直接ファイル名と一致するかで判定
-                        if keyword.lower() in target_dir_name.lower() and (
-                            keyword.lower() in file_name.lower()
-                            or file_name.lower().startswith(keyword.lower())
-                        ):
-                            dest_file_path = os.path.join(
-                                destination_top_dir, file_name
-                            )
-                            if not os.path.exists(dest_file_path):
-                                shutil.copy2(source_file_path, dest_file_path)
-                                print(
-                                    f"コピー (トップ): {file_name} -> {destination_top_dir}"
-                                )
-                                copied = True
-                                # 複数のターゲットディレクトリにコピーされる可能性があるのでbreakはしない
-                                # break
+                        dst_file_path = os.path.join(dst_dir, file_name)
+                        if not os.path.exists(
+                            dst_file_path
+                        ):  # ファイルが既に存在しなければコピー
+                            shutil.copy2(src_file_path, dst_file_path)
+                            print(f"コピー (トップレベル): {file_name} -> {dst_dir}")
+                        copied = True
+                        break
+                if copied:  # コピーされたら次のファイルへ
+                    continue
 
-                        # 条件2: 各フォルダには成果物というフォルダがある
-                        # 条件4: 成果物の方も同様
-                        # 例)030もしくは調査と入っているファイルは030.調査/成果物配下にコピー
-                        # 常に「成果物」フォルダにもコピーを試みる
-                        destination_artifact_dir = os.path.join(
-                            destination_top_dir, "成果物"
-                        )
-                        os.makedirs(destination_artifact_dir, exist_ok=True)
-                        dest_artifact_file_path = os.path.join(
-                            destination_artifact_dir, file_name
-                        )
+            # 2.2. 「成果物」ディレクトリ内の特定ファイルのコピー (フラット化)
+            # パスに「成果物」が含まれ、かつ対象のフォルダキーが特定されている場合
+            # path_partsのどこかに"成果物"が含まれていればOK（例: "010.調査/成果物/内部"）
+            if "成果物" in path_parts and target_folder_key:
+                matchers = config[target_folder_key].get("artifact_matcher", [])
+                for matcher in matchers:
+                    if file_name_lower.startswith(matcher.lower()):
+                        # コピー先のディレクトリパスを作成 (例: dst_base/010.調査/成果物)
+                        dst_dir = os.path.join(dst_base, target_folder_key, "成果物")
+                        os.makedirs(
+                            dst_dir, exist_ok=True
+                        )  # ディレクトリがなければ作成
 
-                        # 成果物フォルダへのコピーは、キーワードがファイル名に含まれていれば行う
-                        if not os.path.exists(dest_artifact_file_path):
-                            shutil.copy2(source_file_path, dest_artifact_file_path)
-                            print(
-                                f"コピー (成果物): {file_name} -> {destination_artifact_dir}"
-                            )
-                            copied = True
+                        dst_file_path = os.path.join(dst_dir, file_name)
+                        if not os.path.exists(
+                            dst_file_path
+                        ):  # ファイルが既に存在しなければコピー
+                            shutil.copy2(src_file_path, dst_file_path)
+                            print(f"コピー: {file_name} -> {dst_dir}")
+                        copied = True
+                        break
+                if copied:  # コピーされたら次のファイルへ
+                    continue
 
-    logging.info(f"探索先ルートバス:{search_root_path}")
-    logging.info(f"コピー先ベースディレクトリパス:{destination_base_dir_path}")
-    logging.info(f"コピーキーワード:{file_pattern}")
+            # どのルールにも合致しなかったファイルはコピーしない (要件2.1と2.2の注意点、要件3)
+            if not copied:
+                # デバッグのために、コピーされなかったファイルをログに出すことも可能
+                # print(f"スキップ: {file_name} in {relative_path} (ルールに合致しないため)")
+                pass
+
+    logging.info(f"コピー先ベースディレクトリパス:{dst_base}")
+    logging.info("--- ファイルコピーが完了しました ---")
 
     return
-    # 1. 基準パス構築
-    # 2. コピー先のディレクトリ構築(フォルダ作成)
-    # 3. Teamsローカルパス配下の探索
-    # for文
-    # 現在の階層で、条件に一致するファイルがあるか判定
-    # 再帰的に実施
-    # 基準パス配下の全てのフォルダで実施
-    # 4. file_patternに合致するか判定
-    # 5. 合致するファイルをコピー先のディレクトの該当の階層にコピー
-    # 6. ログ
-    # 7. エラー処理
