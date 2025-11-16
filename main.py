@@ -43,18 +43,10 @@ def main():
         "--ini_file",
         dest="config_file_path",
         help="設定ファイルへのパス",
-        # required=True,
         type=Path,
         default="/Users/koni/Desktop/delivery_automation_tool/config.ini",
     )
-    parser.add_argument(
-        "-f",
-        "--file_pattern",
-        dest="file_pattern",
-        help="抽出対象のファイル名のパターン",
-        # required=True,
-        default="*.py",
-    )
+
     parser.add_argument(
         "-t",
         "--tree_output",
