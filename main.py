@@ -47,14 +47,6 @@ def main():
         default="/Users/koni/Desktop/delivery_automation_tool/config.ini",
     )
 
-    parser.add_argument(
-        "-t",
-        "--tree_output",
-        dest="tree_output_file_path",
-        help="ツリー出力ファイルのパス。指定しない場合は標準出力に表示",
-        type=Path,
-    )
-
     args = parser.parse_args()
 
     if not args.config_file_path:
@@ -62,10 +54,6 @@ def main():
         sys.exit(1)
 
     logging.info(f"iniファイル: {args.config_file_path}")
-    if args.tree_output_file_path:
-        logging.info(f"ツリー出力先: {args.tree_output_file_path}")
-    else:
-        logging.info("ツリー出力先: 標準出力")
 
     try:
         config = config_manager.load_config(args.config_file_path)
