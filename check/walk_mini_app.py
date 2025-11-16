@@ -16,7 +16,7 @@ config = {
     },
     "050.製造": {
         "top_level_matcher": [],
-        "artifact_matcher": ["050_レビューチェックリスト_", "レビュー記録表_製造"],
+        "artifact_matcher": ["050_レビューチェックリスト_", "レビュー記録表_CD"],
     },
     "060.UD作成": {
         "top_level_matcher": ["単体試験仕様書_"],
