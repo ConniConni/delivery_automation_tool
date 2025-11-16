@@ -18,9 +18,10 @@ import logging
 import sys
 import argparse
 import configparser
-import config_manager
 from pathlib import Path
 
+import config_manager
+import file_processor
 
 # ロギング設定
 logging.basicConfig(
@@ -42,24 +43,8 @@ def main():
         "--ini_file",
         dest="config_file_path",
         help="設定ファイルへのパス",
-        # required=True,
         type=Path,
         default="/Users/koni/Desktop/delivery_automation_tool/config.ini",
-    )
-    parser.add_argument(
-        "-f",
-        "--file_pattern",
-        dest="file_pattern",
-        help="抽出対象のファイル名のパターン",
-        # required=True,
-        default="*.py",
-    )
-    parser.add_argument(
-        "-t",
-        "--tree_output",
-        dest="tree_output_file_path",
-        help="ツリー出力ファイルのパス。指定しない場合は標準出力に表示",
-        type=Path,
     )
 
     args = parser.parse_args()
@@ -69,15 +54,10 @@ def main():
         sys.exit(1)
 
     logging.info(f"iniファイル: {args.config_file_path}")
-    logging.info(f"抽出パターン: {args.file_pattern}")
-    if args.tree_output_file_path:
-        logging.info(f"ツリー出力先: {args.tree_output_file_path}")
-    else:
-        logging.info("ツリー出力先: 標準出力")
 
     try:
         config = config_manager.load_config(args.config_file_path)
-        return config
+
     except FileNotFoundError as e:
         logging.error(e)
         sys.exit(1)
@@ -91,7 +71,8 @@ def main():
         logging.error(f"ファイルの読み込み中に予期せぬエラーが発生しました。:{e}")
         sys.exit(1)
 
+    file_processor.process_files(config)
+
 
 if __name__ == "__main__":
-    config = main()
-    logging.info(config)
+    main()

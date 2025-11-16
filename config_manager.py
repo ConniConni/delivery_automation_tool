@@ -38,10 +38,6 @@ def load_config(config_file_path: Path) -> dict:
     required_general_keys = {
         "teams_root_path": Path,
         "delivery_root_path": Path,
-        "project_name": str,
-        "item_name": str,
-        "delivery_year": int,
-        "delivery_quarter": str,
     }
 
     for key, expected_type in required_general_keys.items():
@@ -55,8 +51,6 @@ def load_config(config_file_path: Path) -> dict:
         try:
             if expected_type == Path:
                 config_data[key] = Path(value)
-            elif expected_type == int:
-                config_data[key] = int(value)
             else:
                 config_data[key] = value
 
@@ -64,19 +58,5 @@ def load_config(config_file_path: Path) -> dict:
             raise ValueError(
                 f"[General]セクションの'{key}'の値が不正な型です。期待される型: {expected_type.__name__}, 実際の値: '{value}'"
             )
-
-    config_data["mappings"] = {}
-    if "Mappings" not in config:
-        raise ValueError("[Mappings]セクションが見つかりません。")
-
-    mappings_section = config["Mappings"]
-
-    placeholder_value = config_data["item_name"]
-
-    for key, value in mappings_section.items():
-        value = mappings_section.get(key)
-
-        replaced_value = value.replace("[案件名]", placeholder_value)
-        config_data["mappings"][key] = Path(replaced_value)
 
     return config_data
