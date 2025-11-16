@@ -39,9 +39,9 @@ config = {
 # コピー元とコピー先のベースパス
 # 環境に合わせてパスを適宜変更してください
 src_base = (
-    "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/マイグレ"
+    "/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル"
 )
-dst_base = "/Users/koni/Desktop/delivery_automation_tool/check/walk_copy_place/マイグレ"
+dst_base = "/Users/koni/Desktop/delivery_automation_tool/check/walk_copy_place/サンプル"
 
 print(f"--- ファイルコピーを開始します ---")
 print(f"コピー元ベース: {src_base}")
