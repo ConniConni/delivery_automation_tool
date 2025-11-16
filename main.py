@@ -62,7 +62,6 @@ def main():
         sys.exit(1)
 
     logging.info(f"iniファイル: {args.config_file_path}")
-    logging.info(f"抽出パターン: {args.file_pattern}")
     if args.tree_output_file_path:
         logging.info(f"ツリー出力先: {args.tree_output_file_path}")
     else:
@@ -84,7 +83,7 @@ def main():
         logging.error(f"ファイルの読み込み中に予期せぬエラーが発生しました。:{e}")
         sys.exit(1)
 
-    file_processor.process_files(config, args.file_pattern)
+    file_processor.process_files(config)
 
 
 if __name__ == "__main__":
