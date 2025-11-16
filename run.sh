@@ -1,14 +1,14 @@
 # !/bin/sh
 
 echo "#### コピー開始 ####"
-python walk_mini_app.py
+python main.py
 
 echo "#### config.ini修正 ####"
-sed -i '' 's|/Users/koni/Desktop/base_teams/マイグレ|/Users/koni/Desktop/base_teams/サンプル2|g' config.ini
+sed -i '' 's|/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/マイグレ|/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル2|g' config.ini
 echo "#### コピー開始 ####"
-python walk_mini_app.py
+python main.py
 
-sed -i '' 's|/Users/koni/Desktop/base_teams/サンプル2|/Users/koni/Desktop/base_teams/マイグレ|g' config.ini
+sed -i '' 's|/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/サンプル2|/Users/koni/Desktop/delivery_automation_tool/check/walk_base_sample/マイグレ|g' config.ini
 
 echo "#### ツリー出力 ####"
 cd /Users/koni/Desktop/copy_teams
